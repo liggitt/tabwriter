@@ -10,7 +10,8 @@ import (
 	"io"
 	"io/ioutil"
 	"testing"
-	. "text/tabwriter"
+
+	. "github.com/liggitt/tabwriter"
 )
 
 type buffer struct {

@@ -7,7 +7,8 @@ package tabwriter_test
 import (
 	"fmt"
 	"os"
-	"text/tabwriter"
+
+	"github.com/liggitt/tabwriter"
 )
 
 func ExampleWriter_Init() {
