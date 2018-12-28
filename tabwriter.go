@@ -106,6 +106,8 @@ type Writer struct {
 	endChar byte     // terminating char of escaped sequence (Escape for escapes, '>', ';' for HTML tags/entities, or 0)
 	lines   [][]cell // list of lines; each line is a list of cells
 	widths  []int    // list of column widths in runes - re-used during formatting
+
+	maxwidths []int // list of max column widths in runes
 }
 
 // addLine adds a new line.
@@ -194,6 +196,9 @@ const (
 	// Print a vertical bar ('|') between columns (after formatting).
 	// Discarded columns appear as zero-width columns ("||").
 	Debug
+
+	// Remember maximum widths seen per column even after Flush() is called.
+	RememberWidths
 )
 
 // A Writer must be initialized with a call to Init. The first parameter (output)
@@ -399,6 +404,21 @@ func (b *Writer) format(pos0 int, line0, line1 int) (pos int) {
 			width = 0
 		}
 
+		if b.flags&RememberWidths != 0 {
+			if len(b.maxwidths) < len(b.widths) {
+				b.maxwidths = append(b.maxwidths, b.widths[len(b.maxwidths):]...)
+			}
+
+			switch {
+			case len(b.maxwidths) == len(b.widths):
+				b.maxwidths = append(b.maxwidths, width)
+			case b.maxwidths[len(b.widths)] > width:
+				width = b.maxwidths[len(b.widths)]
+			case b.maxwidths[len(b.widths)] < width:
+				b.maxwidths[len(b.widths)] = width
+			}
+		}
+
 		// format and print all columns to the right of this column
 		// (we know the widths of this column and all columns to the left)
 		b.widths = append(b.widths, width) // push width
@@ -483,6 +503,22 @@ func handlePanic(err *error, op string) {
 		}
 		panic("tabwriter: panic during " + op)
 	}
+}
+
+// RememberedWidths returns a copy of the remembered per-column maximum widths.
+// Requires use of the RememberWidths flag, and is not threadsafe.
+func (b *Writer) RememberedWidths() []int {
+	retval := make([]int, len(b.maxwidths))
+	copy(retval, b.maxwidths)
+	return retval
+}
+
+// SetRememberedWidths sets the remembered per-column maximum widths.
+// Requires use of the RememberWidths flag, and is not threadsafe.
+func (b *Writer) SetRememberedWidths(widths []int) *Writer {
+	b.maxwidths = make([]int, len(widths))
+	copy(b.maxwidths, widths)
+	return b
 }
 
 // Flush should be called after the last call to Write to ensure

@@ -72,3 +72,27 @@ func Example_trailingTab() {
 	// ----aaa|----bbb|unaligned
 	// ---aaaa|---bbbb|---aligned|
 }
+
+func Example_rememberWidth() {
+	// Observe that the columns continue to line up after the Flush() call,
+	// as long as they are no wider than previously written columns
+	const padding = 3
+	w := tabwriter.NewWriter(os.Stdout, 4, 6, 3, ' ', tabwriter.RememberWidths|tabwriter.Debug)
+	fmt.Fprintln(w, "a\tb\tc")
+	fmt.Fprintln(w, "ddd\teeeee\tfff")
+	w.Flush()
+	fmt.Fprintln(w, "g\thh\tii")
+	fmt.Fprintln(w, "jjj\tk\tl")
+	w.Flush()
+	fmt.Fprintln(w, "mmmmm\tn\to")
+	fmt.Fprintln(w, "p\tqqq\trrr")
+	w.Flush()
+
+	// output:
+	// a     |b       |c
+	// ddd   |eeeee   |fff
+	// g     |hh      |ii
+	// jjj   |k       |l
+	// mmmmm   |n       |o
+	// p       |qqq     |rrr
+}
