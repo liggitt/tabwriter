@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"reflect"
+	"strings"
 	"testing"
 
 	. "github.com/liggitt/tabwriter"
@@ -728,5 +730,145 @@ func BenchmarkRagged(b *testing.B) {
 				w.Flush()
 			}
 		})
+	}
+}
+
+func TestMultiWrite(t *testing.T) {
+	buffer := bytes.NewBuffer([]byte{})
+	w := NewWriter(buffer, 6, 4, 3, ' ', RememberWidths)
+	w.Write([]byte("First\tMiddle\tLast\n"))
+	w.Write([]byte("a\tbb\tccc\n"))
+	w.Write([]byte("ddd\teeeeeeeeeeeeee\tf\n"))
+	w.Flush()
+	expected := strings.Join([]string{
+		"First   Middle           Last\n",
+		"a       bb               ccc\n",
+		"ddd     eeeeeeeeeeeeee   f\n",
+	}, "")
+	if actual := buffer.String(); expected != actual {
+		t.Errorf("Expected:\n%s\nGot:\n%s", expected, actual)
+	}
+
+	w.Write([]byte("g\th\ti\n"))
+	w.Flush()
+	expected = strings.Join([]string{
+		"First   Middle           Last\n",
+		"a       bb               ccc\n",
+		"ddd     eeeeeeeeeeeeee   f\n",
+		"g       h                i\n",
+	}, "")
+	if actual := buffer.String(); expected != actual {
+		t.Errorf("Expected:\n%s\nGot:\n%s", expected, actual)
+	}
+
+	w.Write([]byte("j\t\t\n"))
+	w.Flush()
+	w.Write([]byte("\tk\t\n"))
+	w.Flush()
+	w.Write([]byte("\t\tl\n"))
+	w.Flush()
+	expected = strings.Join([]string{
+		"First   Middle           Last\n",
+		"a       bb               ccc\n",
+		"ddd     eeeeeeeeeeeeee   f\n",
+		"g       h                i\n",
+		"j                        \n",
+		"        k                \n",
+		"                         l\n",
+	}, "")
+	if actual := buffer.String(); expected != actual {
+		t.Errorf("Expected:\n%s\nGot:\n%s", expected, actual)
+	}
+
+	w.Write([]byte("mmmmmmmmmmmmmmm\tnnn\tooo\n"))
+	w.Flush()
+	expected = strings.Join([]string{
+		"First   Middle           Last\n",
+		"a       bb               ccc\n",
+		"ddd     eeeeeeeeeeeeee   f\n",
+		"g       h                i\n",
+		"j                        \n",
+		"        k                \n",
+		"                         l\n",
+		"mmmmmmmmmmmmmmm   nnn              ooo\n",
+	}, "")
+	if actual := buffer.String(); expected != actual {
+		t.Errorf("Expected:\n%s\nGot:\n%s", expected, actual)
+	}
+
+	// Demonstrate seamlessly transferring remembered column widths to a new writer
+	newWriter := NewWriter(buffer, 6, 4, 3, ' ', RememberWidths).SetRememberedWidths(w.RememberedWidths())
+	w = newWriter
+
+	w.Write([]byte("p\tq\tr\n"))
+	w.Flush()
+	expected = strings.Join([]string{
+		"First   Middle           Last\n",
+		"a       bb               ccc\n",
+		"ddd     eeeeeeeeeeeeee   f\n",
+		"g       h                i\n",
+		"j                        \n",
+		"        k                \n",
+		"                         l\n",
+		"mmmmmmmmmmmmmmm   nnn              ooo\n",
+		"p                 q                r\n",
+	}, "")
+	if actual := buffer.String(); expected != actual {
+		t.Errorf("Expected:\n%s\nGot:\n%s", expected, actual)
+	}
+
+	expectedWidths := []int{18, 17}
+	actualWidths := w.RememberedWidths()
+	if !reflect.DeepEqual(expectedWidths, actualWidths) {
+		t.Errorf("expected:\n%v\ngot:\n%v", expectedWidths, actualWidths)
+	}
+
+	// Reset remembered widths
+	w.SetRememberedWidths(nil)
+
+	w.Write([]byte("sssss\tt\tu\n"))
+	w.Flush()
+	expected = strings.Join([]string{
+		"First   Middle           Last\n",
+		"a       bb               ccc\n",
+		"ddd     eeeeeeeeeeeeee   f\n",
+		"g       h                i\n",
+		"j                        \n",
+		"        k                \n",
+		"                         l\n",
+		"mmmmmmmmmmmmmmm   nnn              ooo\n",
+		"p                 q                r\n",
+		"sssss   t     u\n",
+	}, "")
+	if actual := buffer.String(); expected != actual {
+		t.Errorf("Expected:\n%s\nGot:\n%s", expected, actual)
+	}
+
+	expectedWidths = []int{8, 6}
+	actualWidths = w.RememberedWidths()
+	if !reflect.DeepEqual(expectedWidths, actualWidths) {
+		t.Errorf("expected:\n%v\ngot:\n%v", expectedWidths, actualWidths)
+	}
+
+	// Set remembered widths to different values
+	w.SetRememberedWidths([]int{10, 5, 5})
+
+	w.Write([]byte("v\tw\tx\n"))
+	w.Flush()
+	expected = strings.Join([]string{
+		"First   Middle           Last\n",
+		"a       bb               ccc\n",
+		"ddd     eeeeeeeeeeeeee   f\n",
+		"g       h                i\n",
+		"j                        \n",
+		"        k                \n",
+		"                         l\n",
+		"mmmmmmmmmmmmmmm   nnn              ooo\n",
+		"p                 q                r\n",
+		"sssss   t     u\n",
+		"v         w     x\n",
+	}, "")
+	if actual := buffer.String(); expected != actual {
+		t.Errorf("Expected:\n%s\nGot:\n%s", expected, actual)
 	}
 }
