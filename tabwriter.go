@@ -5,6 +5,10 @@
 // Package tabwriter implements a write filter (tabwriter.Writer) that
 // translates tabbed columns in input into properly aligned text.
 //
+// It is a drop-in replacement for the golang text/tabwriter package (https://golang.org/pkg/text/tabwriter),
+// based on that package at https://github.com/golang/go/tree/cf2c2ea89d09d486bb018b1817c5874388038c3a
+// with support for additional features.
+//
 // The package is using the Elastic Tabstops algorithm described at
 // http://nickgravgaard.com/elastictabstops/index.html.
 package tabwriter
