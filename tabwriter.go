@@ -199,6 +199,10 @@ const (
 
 	// Remember maximum widths seen per column even after Flush() is called.
 	RememberWidths
+
+	// Smash escaped text to zero width, but output the whole text unescaped.
+	// This is useful to colorize output in terminals.
+	SmashEscape
 )
 
 // A Writer must be initialized with a call to Init. The first parameter (output)
@@ -472,9 +476,13 @@ func (b *Writer) startEscape(ch byte) {
 func (b *Writer) endEscape() {
 	switch b.endChar {
 	case Escape:
-		b.updateWidth()
-		if b.flags&StripEscape == 0 {
-			b.cell.width -= 2 // don't count the Escape chars
+		if b.flags&SmashEscape == 0 {
+			b.updateWidth()
+			if b.flags&StripEscape == 0 {
+				b.cell.width -= 2 // don't count the Escape chars
+			}
+		} else {
+			b.pos = len(b.buf)
 		}
 	case '>': // tag of zero width
 	case ';':

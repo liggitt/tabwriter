@@ -5,3 +5,4 @@ It is based on that package at [cf2c2ea8](https://github.com/golang/go/tree/cf2c
 The following additional features are supported:
 * `RememberWidths` flag allows remembering maximum widths seen per column even after Flush() is called.
 * `RememberedWidths() []int` and `SetRememberedWidths([]int) *Writer` allows obtaining and transferring remembered column width between writers.
+* `SmashEscape` flag ignores escaped text when determining the column width. This is useful for coloring text in columns.
