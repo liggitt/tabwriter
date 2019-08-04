@@ -629,6 +629,11 @@ func (b *Writer) Write(buf []byte) (n int, err error) {
 	return
 }
 
+// IsEmpty returns true if the writer b holds no content.
+func (b *Writer) IsEmpty() bool {
+	return b.cell.size == 0 && len(b.lines) == 0
+}
+
 // NewWriter allocates and initializes a new tabwriter.Writer.
 // The parameters are the same as for the Init function.
 //
