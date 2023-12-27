@@ -14,6 +14,7 @@
 package tabwriter
 
 import (
+	"github.com/liggitt/tabwriter/unicode"
 	"io"
 	"unicode/utf8"
 )
@@ -199,6 +200,9 @@ const (
 
 	// Remember maximum widths seen per column even after Flush() is called.
 	RememberWidths
+
+	// Combine multiple runes into individual user-perceived characters ("grapheme clusters" in Unicode specification)
+	GraphemeClusterWidth
 )
 
 // A Writer must be initialized with a call to Init. The first parameter (output)
@@ -439,7 +443,11 @@ func (b *Writer) append(text []byte) {
 
 // Update the cell width.
 func (b *Writer) updateWidth() {
-	b.cell.width += utf8.RuneCount(b.buf[b.pos:])
+	if b.flags&GraphemeClusterWidth != 0 {
+		b.cell.width += unicode.MonospaceWidth(b.buf[b.pos:])
+	} else {
+		b.cell.width += utf8.RuneCount(b.buf[b.pos:])
+	}
 	b.pos = len(b.buf)
 }
 
