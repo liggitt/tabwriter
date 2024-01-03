@@ -368,11 +368,36 @@ var tests = []struct {
 		"1....2....3....4....\n",
 	},
 
+	// Emoji Variation Selector - all width of 1
 	{
 		"10d",
 		5, 0, 0, '.', GraphemeClusterWidth,
-		"🏴‍☠️\t🏳️‍🌈\t🇩🇪\t\n",
-		"🏴‍☠️....🏳️‍🌈....🇩🇪....\n",
+		"\u2716\t\u2716\ufe0e\t\u2716\ufe0f\t\n\u263a\t\u263a\ufe0e\t\u263a\ufe0f\t\n",
+		"✖....✖︎....✖️....\n☺....☺︎....☺️....\n",
+	},
+
+	// Emoji Flags - pirate flag is width 2, rest are width 1
+	{
+		"10e",
+		5, 0, 0, '.', GraphemeClusterWidth,
+		"\U0001F3F4\u200D\u2620\t\U0001F3F3\u200D\U0001F308\t\U0001F1E9\U0001F1EA\t\n",
+		"🏴‍☠️...🏳️‍🌈....🇩🇪....\n",
+	},
+
+	// Emoji Speedboat - width 1, rest are width 2
+	{
+		"10e",
+		5, 0, 0, '.', GraphemeClusterWidth,
+		"\U0001F6E5\t\U0001F4A3\t\U0001F468\u200D\U0001F467\u200D\U0001F466\t\n",
+		"🛥....💣...👨‍👧‍👦...\n",
+	},
+
+	// East Asian characters should be width 2
+	{
+		"10f",
+		5, 0, 0, '.', GraphemeClusterWidth,
+		"容器\t容器\t容器\t\n",
+		"容器.容器.容器.\n",
 	},
 
 	{
